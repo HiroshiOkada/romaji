@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>romaji</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <header class="top">
+    <h1>romaji</h1>
+    <p class="sub">ローマ字入力 → 日本語変換</p>
+    <div class="actions">
+      <button type="button" id="confirmBtn">確定／保存</button>
+      <button type="button" id="logicBtn" class="secondary">ロジック更新</button>
+      <span id="status" class="status" aria-live="polite"></span>
+    </div>
+  </header>
+
+  <main class="panes">
+    <section class="pane">
+      <label for="input">入力（ローマ字）</label>
+      <textarea id="input" spellcheck="false" placeholder="romaji wo nyuuryoku..."></textarea>
+    </section>
+    <section class="pane">
+      <label for="output">変換結果（編集可）</label>
+      <textarea id="output" spellcheck="true" placeholder="ここに変換結果が表示されます"></textarea>
+    </section>
+  </main>
+
+  <footer class="meta">
+    <span id="logicVersion"></span>
+  </footer>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

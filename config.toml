@@ -1,0 +1,26 @@
+# アプリケーション設定（秘密情報は書かない）
+# host / port にコード側デフォルトはない。未設定だと起動失敗する。
+# よくあるローカル LLM ポート（11434, 1234, 8080, 8000, 7860, 5000, 3000）は避ける。
+
+[server]
+host = "127.0.0.1"
+port = 18765
+
+[paths]
+logic_dir = "data/logic"
+examples_dir = "data/examples"
+
+[llm]
+base_url = "https://openrouter.ai/api/v1"
+api_key_env = "LLM_INPUT_API_KEY"
+
+# 変換実行モデルは暫定。完成後の実測で確定する。
+[llm.conversion]
+model = "google/gemini-3.1-flash-lite-preview"
+
+[llm.logic_revision]
+model = "openai/gpt-5.6-terra"
+
+[ui]
+# 入力停止後、このミリ秒待ってから自動変換する
+debounce_ms = 800
