@@ -1,0 +1,141 @@
+:root {
+  --bg: #f3efe6;
+  --ink: #1c1a16;
+  --muted: #5c574e;
+  --panel: #fffdf8;
+  --line: #d9d2c5;
+  --accent: #0f6a5a;
+  --accent-ink: #f7fffc;
+  --danger: #8a2f2f;
+  --mono: "IBM Plex Mono", "Source Code Pro", "Consolas", monospace;
+  --sans: "IBM Plex Sans JP", "Hiragino Sans", "Noto Sans JP", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  color: var(--ink);
+  background:
+    radial-gradient(1200px 500px at 10% -10%, #e7f2ee 0%, transparent 55%),
+    radial-gradient(900px 400px at 100% 0%, #efe6d8 0%, transparent 50%),
+    var(--bg);
+  font-family: var(--sans);
+}
+
+.top {
+  padding: 1.25rem 1.5rem 0.75rem;
+}
+
+.top h1 {
+  margin: 0;
+  font-size: 1.6rem;
+  letter-spacing: 0.04em;
+}
+
+.sub {
+  margin: 0.25rem 0 0.9rem;
+  color: var(--muted);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  align-items: center;
+}
+
+button {
+  appearance: none;
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: var(--accent-ink);
+  border-radius: 0.4rem;
+  padding: 0.45rem 0.9rem;
+  font: inherit;
+  cursor: pointer;
+}
+
+button.secondary {
+  background: transparent;
+  color: var(--accent);
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+
+.status {
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.status.error {
+  color: var(--danger);
+}
+
+.panes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  padding: 0.5rem 1.5rem 1.5rem;
+  min-height: calc(100vh - 9rem);
+}
+
+.pane {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  min-height: 0;
+}
+
+.pane label {
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+textarea {
+  flex: 1;
+  min-height: 22rem;
+  width: 100%;
+  resize: vertical;
+  border: 1px solid var(--line);
+  border-radius: 0.55rem;
+  background: var(--panel);
+  color: var(--ink);
+  padding: 0.9rem 1rem;
+  font-family: var(--mono);
+  font-size: 0.98rem;
+  line-height: 1.55;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+textarea:focus {
+  outline: 2px solid color-mix(in srgb, var(--accent) 45%, white);
+  outline-offset: 1px;
+}
+
+.meta {
+  padding: 0 1.5rem 1.25rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+@media (max-width: 860px) {
+  .panes {
+    grid-template-columns: 1fr;
+    min-height: auto;
+  }
+
+  textarea {
+    min-height: 14rem;
+  }
+}
