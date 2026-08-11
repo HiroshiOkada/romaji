@@ -13,3 +13,12 @@ wheels/
 .env
 .env.*
 !.env.example
+
+# Runtime data (確定例・更新後ロジック)
+# sample.txt と初期ロジック (*_initial.md) はリポジトリに残す
+data/examples/*.json
+data/logic/current.md
+data/logic/current_version.txt
+data/logic/versions/*
+!data/logic/versions/.gitkeep
+!data/logic/versions/*_initial.md
