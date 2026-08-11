@@ -1,0 +1,35 @@
+
+
+## Input
+
+muse spark 1.2 ga detekara suuzituga sugimasita , konobunyani kansin no takai souniyoru seinouya kakakuni taisuru itteino hyoukawa owatteiruto omoimasuga, hyoukawa doudesuka.
+
+
+##  Output
+
+
+Muse Spark 1.2 が出てから数日すぎました、この分野に関心の高い層による性能や価格に対する一定の評価は終わっていると思いますが、評価はどうですか。
+
+
+## Input
+
+ai wa, aiwo sasaeru software no kaihatuwo hazimeteori, nvidia no tuyomidearu cuda software ni tyousensitutuaru.
+
+
+## Output
+
+AIは、AIを支えるソフトウェアの開発を始めており、NVIDIAの強みであるCUDAソフトウェアに挑戦しつつある。
+
+
+
+## Input
+
+hobo yoteikingaku torihikisitanode mata ribarance hannteiga true ni narumade torihitiha sinai yoteidesu.
+
+
+## Output
+
+
+ほぼ予定金額取引したので、またリバランス判定がTRUEになるまで、取引きはしない予定です。
+
+
