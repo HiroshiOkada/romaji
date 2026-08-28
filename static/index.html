@@ -8,16 +8,47 @@
 </head>
 <body>
   <header class="top">
-    <h1>romaji</h1>
-    <p class="sub">ローマ字入力 → 日本語変換</p>
-    <div class="actions">
+    <div class="header-header">
+      <div>
+        <h1>romaji</h1>
+        <p class="sub">ローマ字入力 → 日本語変換</p>
+      </div>
+      <div id="userBar" class="user-bar" hidden>
+        <span id="currentUser" class="user-badge"></span>
+        <button type="button" id="logoutBtn" class="secondary btn-sm">ログアウト</button>
+      </div>
+    </div>
+    <div class="actions" id="appActions" hidden>
       <button type="button" id="confirmBtn">確定／保存</button>
       <button type="button" id="logicBtn" class="secondary">ロジック更新</button>
+      <span id="guestNotice" class="guest-notice" hidden>ゲスト利用中（変換のみ）</span>
       <span id="status" class="status" aria-live="polite"></span>
     </div>
   </header>
 
-  <main class="panes">
+  <div id="loginView" class="login-container">
+    <div class="login-card">
+      <h2>ログイン</h2>
+      <p class="login-desc">romaji アプリケーションを利用するにはログインしてください。</p>
+      <form id="loginForm">
+        <div class="form-group">
+          <label for="loginUser">ユーザー名</label>
+          <select id="loginUser" required>
+            <option value="admin">admin (管理者)</option>
+            <option value="guest">guest (ゲスト)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="loginPassword">パスワード</label>
+          <input type="password" id="loginPassword" placeholder="パスワードを入力" required autocomplete="current-password">
+        </div>
+        <div id="loginError" class="login-error" role="alert" hidden></div>
+        <button type="submit" id="loginSubmitBtn">ログイン</button>
+      </form>
+    </div>
+  </div>
+
+  <main class="panes" id="mainPanes" hidden>
     <section class="pane">
       <label for="input">入力（ローマ字）</label>
       <textarea id="input" spellcheck="false" placeholder="romaji wo nyuuryoku..."></textarea>
@@ -28,7 +59,7 @@
     </section>
   </main>
 
-  <footer class="meta">
+  <footer class="meta" id="mainFooter" hidden>
     <span id="logicVersion"></span>
   </footer>
 

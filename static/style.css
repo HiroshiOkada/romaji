@@ -6,6 +6,7 @@
   --line: #d9d2c5;
   --accent: #0f6a5a;
   --accent-ink: #f7fffc;
+  --accent-soft: #e7f2ee;
   --danger: #8a2f2f;
   --mono: "IBM Plex Mono", "Source Code Pro", "Consolas", monospace;
   --sans: "IBM Plex Sans JP", "Hiragino Sans", "Noto Sans JP", sans-serif;
@@ -34,6 +35,13 @@ body {
   padding: 1.25rem 1.5rem 0.75rem;
 }
 
+.header-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
 .top h1 {
   margin: 0;
   font-size: 1.6rem;
@@ -43,6 +51,36 @@ body {
 .sub {
   margin: 0.25rem 0 0.9rem;
   color: var(--muted);
+}
+
+.user-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.user-badge {
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+  padding: 0.25rem 0.6rem;
+  border-radius: 0.35rem;
+}
+
+.btn-sm {
+  padding: 0.25rem 0.65rem;
+  font-size: 0.85rem;
+}
+
+.guest-notice {
+  font-size: 0.85rem;
+  color: var(--muted);
+  background: #fdf6ec;
+  border: 1px solid #faecd8;
+  padding: 0.25rem 0.6rem;
+  border-radius: 0.35rem;
 }
 
 .actions {
@@ -82,6 +120,85 @@ button:disabled {
   color: var(--danger);
 }
 
+/* ログインフォーム */
+.login-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 3rem 1.5rem;
+  min-height: calc(100vh - 12rem);
+}
+
+.login-card {
+  width: 100%;
+  max-width: 400px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 0.75rem;
+  padding: 2rem;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.04);
+}
+
+.login-card h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1.4rem;
+}
+
+.login-desc {
+  margin: 0 0 1.5rem;
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.form-group {
+  margin-bottom: 1.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.form-group label {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.form-group input,
+.form-group select {
+  width: 100%;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid var(--line);
+  border-radius: 0.45rem;
+  background: #fff;
+  font-family: var(--sans);
+  font-size: 0.95rem;
+  color: var(--ink);
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  outline: 2px solid color-mix(in srgb, var(--accent) 45%, white);
+  outline-offset: 1px;
+}
+
+.login-error {
+  color: var(--danger);
+  font-size: 0.88rem;
+  margin: 0 0 1rem;
+  padding: 0.5rem 0.75rem;
+  background: #fdf0f0;
+  border-radius: 0.35rem;
+  border: 1px solid #f8d7d7;
+}
+
+.login-card button[type="submit"] {
+  width: 100%;
+  padding: 0.65rem;
+  font-size: 1rem;
+}
+
+/* メインペイン */
 .panes {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -137,5 +254,9 @@ textarea:focus {
 
   textarea {
     min-height: 14rem;
+  }
+
+  .header-header {
+    flex-direction: column;
   }
 }

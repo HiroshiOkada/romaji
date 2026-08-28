@@ -1,4 +1,19 @@
 (() => {
+  const loginView = document.getElementById("loginView");
+  const loginForm = document.getElementById("loginForm");
+  const loginUser = document.getElementById("loginUser");
+  const loginPassword = document.getElementById("loginPassword");
+  const loginSubmitBtn = document.getElementById("loginSubmitBtn");
+  const loginError = document.getElementById("loginError");
+
+  const userBar = document.getElementById("userBar");
+  const currentUserEl = document.getElementById("currentUser");
+  const logoutBtn = document.getElementById("logoutBtn");
+  const appActions = document.getElementById("appActions");
+  const guestNotice = document.getElementById("guestNotice");
+
+  const mainPanes = document.getElementById("mainPanes");
+  const mainFooter = document.getElementById("mainFooter");
   const inputEl = document.getElementById("input");
   const outputEl = document.getElementById("output");
   const statusEl = document.getElementById("status");
@@ -12,14 +27,77 @@
   let lastAutoOutput = "";
   let lastLogicVersion = "";
   let converting = false;
+  let currentUser = null; // { username: string, role: string }
 
   function setStatus(message, isError = false) {
     statusEl.textContent = message || "";
     statusEl.classList.toggle("error", Boolean(isError));
   }
 
+  function showLoginView(errorMessage = "") {
+    currentUser = null;
+    loginView.hidden = false;
+    userBar.hidden = true;
+    appActions.hidden = true;
+    mainPanes.hidden = true;
+    mainFooter.hidden = true;
+    loginPassword.value = "";
+    if (errorMessage) {
+      loginError.textContent = errorMessage;
+      loginError.hidden = false;
+    } else {
+      loginError.hidden = true;
+    }
+  }
+
+  function showAppView(user) {
+    currentUser = user;
+    loginView.hidden = true;
+    loginError.hidden = true;
+    userBar.hidden = false;
+    appActions.hidden = false;
+    mainPanes.hidden = false;
+    mainFooter.hidden = false;
+
+    const roleName = user.role === "admin" ? "管理者" : "ゲスト";
+    currentUserEl.textContent = `${user.username} (${roleName})`;
+
+    if (user.role === "guest") {
+      confirmBtn.hidden = true;
+      logicBtn.hidden = true;
+      guestNotice.hidden = false;
+    } else {
+      confirmBtn.hidden = false;
+      logicBtn.hidden = false;
+      guestNotice.hidden = true;
+    }
+  }
+
+  async function checkAuth() {
+    try {
+      const res = await fetch("/api/auth/me");
+      if (!res.ok) {
+        showLoginView();
+        return;
+      }
+      const data = await res.json();
+      if (data.authenticated && data.username) {
+        showAppView({ username: data.username, role: data.role });
+        await Promise.all([loadUiConfig(), loadLogic()]);
+      } else {
+        showLoginView();
+      }
+    } catch (err) {
+      showLoginView();
+    }
+  }
+
   async function loadUiConfig() {
     const res = await fetch("/api/ui-config");
+    if (res.status === 401) {
+      showLoginView("セッションが切れました。再ログインしてください。");
+      return;
+    }
     if (!res.ok) return;
     const data = await res.json();
     if (typeof data.debounce_ms === "number") {
@@ -29,6 +107,10 @@
 
   async function loadLogic() {
     const res = await fetch("/api/logic");
+    if (res.status === 401) {
+      showLoginView("セッションが切れました。再ログインしてください。");
+      return;
+    }
     if (!res.ok) return;
     const data = await res.json();
     lastLogicVersion = data.version_id || "";
@@ -37,7 +119,50 @@
       : "";
   }
 
+  async function handleLogin(e) {
+    e.preventDefault();
+    loginError.hidden = true;
+    loginSubmitBtn.disabled = true;
+    loginSubmitBtn.textContent = "ログイン中…";
+
+    const username = loginUser.value;
+    const password = loginPassword.value;
+
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data.detail || "ログインに失敗しました");
+      }
+      showAppView({ username: data.username, role: data.role });
+      await Promise.all([loadUiConfig(), loadLogic()]);
+    } catch (err) {
+      loginError.textContent = err.message || "ログインに失敗しました";
+      loginError.hidden = false;
+    } finally {
+      loginSubmitBtn.disabled = false;
+      loginSubmitBtn.textContent = "ログイン";
+    }
+  }
+
+  async function handleLogout() {
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+    } catch (err) {
+      // 無視
+    }
+    inputEl.value = "";
+    outputEl.value = "";
+    lastAutoOutput = "";
+    showLoginView();
+  }
+
   async function convertNow() {
+    if (!currentUser) return;
     const text = inputEl.value;
     if (!text.trim()) {
       outputEl.value = "";
@@ -58,6 +183,10 @@
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text }),
       });
+      if (res.status === 401) {
+        showLoginView("セッションが切れました。再ログインしてください。");
+        return;
+      }
       const data = await res.json().catch(() => ({}));
       if (seq !== requestSeq) return;
       if (!res.ok) {
@@ -89,13 +218,16 @@
     }, debounceMs);
   }
 
+  loginForm.addEventListener("submit", handleLogin);
+  logoutBtn.addEventListener("click", handleLogout);
+
   inputEl.addEventListener("input", () => {
     setStatus("入力中…");
     scheduleConvert();
   });
 
   confirmBtn.addEventListener("click", async () => {
-    if (converting) return;
+    if (converting || !currentUser || currentUser.role !== "admin") return;
     const inputText = inputEl.value;
     const confirmed = outputEl.value;
     if (!inputText.trim() || !confirmed.trim()) {
@@ -114,6 +246,10 @@
           confirmed_output: confirmed,
         }),
       });
+      if (res.status === 401) {
+        showLoginView("セッションが切れました。再ログインしてください。");
+        return;
+      }
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         throw new Error(data.detail || `保存に失敗しました (${res.status})`);
@@ -127,12 +263,16 @@
   });
 
   logicBtn.addEventListener("click", async () => {
-    if (converting) return;
+    if (converting || !currentUser || currentUser.role !== "admin") return;
     logicBtn.disabled = true;
     confirmBtn.disabled = true;
     setStatus("ロジック更新中…");
     try {
       const res = await fetch("/api/logic/update", { method: "POST" });
+      if (res.status === 401) {
+        showLoginView("セッションが切れました。再ログインしてください。");
+        return;
+      }
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         throw new Error(data.detail || `更新に失敗しました (${res.status})`);
@@ -150,7 +290,5 @@
     }
   });
 
-  Promise.all([loadUiConfig(), loadLogic()]).catch((err) => {
-    setStatus(err.message || String(err), true);
-  });
+  checkAuth();
 })();
