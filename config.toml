@@ -9,6 +9,7 @@ port = 18765
 [paths]
 logic_dir = "data/logic"
 examples_dir = "data/examples"
+auth_dir = "data/auth"
 
 [llm]
 base_url = "https://openrouter.ai/api/v1"

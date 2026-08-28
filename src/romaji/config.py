@@ -37,6 +37,8 @@ class LlmConfig:
 class PathsConfig:
     logic_dir: Path
     examples_dir: Path
+    auth_dir: Path
+
 
 
 @dataclass(frozen=True)
@@ -105,6 +107,10 @@ def load_config(config_path: Path | None = None, *, load_env: bool = True) -> Ap
     paths_raw = _require_mapping(raw.get("paths"), "paths")
     logic_dir = _resolve_path(_require_str(paths_raw, "logic_dir", "paths"))
     examples_dir = _resolve_path(_require_str(paths_raw, "examples_dir", "paths"))
+    auth_dir_val = paths_raw.get("auth_dir", "data/auth")
+    if not isinstance(auth_dir_val, str) or not auth_dir_val.strip():
+        raise ConfigError("[paths] auth_dir は有効な文字列パスである必要があります")
+    auth_dir = _resolve_path(auth_dir_val.strip())
 
     llm_raw = _require_mapping(raw.get("llm"), "llm")
     base_url = _require_str(llm_raw, "base_url", "llm")
@@ -136,7 +142,11 @@ def load_config(config_path: Path | None = None, *, load_env: bool = True) -> Ap
             conversion=conversion,
             logic_revision=logic_revision,
         ),
-        paths=PathsConfig(logic_dir=logic_dir, examples_dir=examples_dir),
+        paths=PathsConfig(
+            logic_dir=logic_dir,
+            examples_dir=examples_dir,
+            auth_dir=auth_dir,
+        ),
         ui=UiConfig(debounce_ms=debounce_ms),
         config_path=path,
     )
