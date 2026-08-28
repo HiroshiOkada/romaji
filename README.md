@@ -8,6 +8,9 @@
 
 - 入力停止後に自動変換（debounce）
 - 変換結果を右ペインで編集可能
+- **admin / guest ログイン認証**:
+  - `admin`: フル機能（変換・確定保存・ロジック更新）
+  - `guest`: 変換機能のみ（履歴保存・ロジック更新は無効）
 - **確定／保存** で学習用の入出力だけを永続化（下書きはブラウザ／セッションのみ）
 - **ロジック更新** で確定例から指示文を改訂（確認なしで即反映、過去版へ復元可）
 - 設定は TOML、API キーは `.env`
@@ -19,7 +22,21 @@ cp .env.example .env
 # .env 例:
 # LLM_INPUT_API_KEY=sk-or-v1-...
 uv sync
+
+# パスワードの発行 (admin / guest)
+uv run romaji issue-password admin
+uv run romaji issue-password guest
 ```
+
+### パスワードの発行・再発行
+
+CLI から `admin` および `guest` のパスワードを安全なランダム文字列として発行します。再発行時は単純な上書き保存となります。
+
+```bash
+uv run romaji issue-password admin
+uv run romaji issue-password guest
+```
+
 
 ### 設定ファイル
 

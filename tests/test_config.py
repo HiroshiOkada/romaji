@@ -75,3 +75,5 @@ debounce_ms = 800
     assert cfg.server.port == 18765
     assert cfg.llm.api_key_env == "LLM_INPUT_API_KEY"
     assert cfg.llm.api_key == "test-key"
+    assert cfg.paths.auth_dir.name == "auth"
+
