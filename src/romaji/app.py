@@ -168,16 +168,16 @@ def create_app() -> FastAPI:
         return MeResponse(authenticated=False, username=None, role=None)
 
     @app.get("/api/ui-config", response_model=UiConfigResponse)
-    def ui_config() -> UiConfigResponse:
+    def ui_config(_user: str = Depends(get_current_user)) -> UiConfigResponse:
         return UiConfigResponse(debounce_ms=get_config().ui.debounce_ms)
 
     @app.get("/api/logic", response_model=LogicResponse)
-    def get_logic() -> LogicResponse:
+    def get_logic(_user: str = Depends(get_current_user)) -> LogicResponse:
         store = get_logic_store()
         return LogicResponse(version_id=store.current_version_id(), text=store.read_current())
 
     @app.post("/api/convert", response_model=ConvertResponse)
-    def convert(body: ConvertRequest) -> ConvertResponse:
+    def convert(body: ConvertRequest, _user: str = Depends(get_current_user)) -> ConvertResponse:
         config = get_config()
         logic_store = get_logic_store()
         client = create_client(config.llm)
@@ -196,7 +196,7 @@ def create_app() -> FastAPI:
         )
 
     @app.post("/api/convert/stream")
-    def convert_stream(body: ConvertRequest) -> StreamingResponse:
+    def convert_stream(body: ConvertRequest, _user: str = Depends(get_current_user)) -> StreamingResponse:
         config = get_config()
         logic_store = get_logic_store()
         client = create_client(config.llm)
@@ -216,7 +216,7 @@ def create_app() -> FastAPI:
         return StreamingResponse(event_iter(), media_type="text/plain; charset=utf-8")
 
     @app.post("/api/confirm", response_model=ConfirmResponse)
-    def confirm(body: ConfirmRequest) -> ConfirmResponse:
+    def confirm(body: ConfirmRequest, _user: str = Depends(require_admin)) -> ConfirmResponse:
         logic_store = get_logic_store()
         example_store = get_example_store()
         version_id = logic_store.current_version_id()
@@ -232,7 +232,7 @@ def create_app() -> FastAPI:
         return ConfirmResponse(id=saved.id, logic_version_id=version_id)
 
     @app.post("/api/logic/update", response_model=LogicUpdateResponse)
-    def update_logic() -> LogicUpdateResponse:
+    def update_logic(_user: str = Depends(require_admin)) -> LogicUpdateResponse:
         config = get_config()
         logic_store = get_logic_store()
         example_store = get_example_store()
