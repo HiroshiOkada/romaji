@@ -37,3 +37,10 @@ def test_app_js_syntax_is_valid() -> None:
         text=True,
     )
     assert result.returncode == 0, result.stderr
+
+
+def test_style_css_hidden_attribute_guard() -> None:
+    """display 指定が hidden 属性を無効化しないためのガードがあること。"""
+    css = (STATIC_DIR / "style.css").read_text(encoding="utf-8")
+    assert "[hidden]" in css
+    assert "display: none" in css

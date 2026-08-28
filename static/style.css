@@ -16,6 +16,11 @@
   box-sizing: border-box;
 }
 
+/* display 指定があっても hidden 属性を必ず優先させる */
+[hidden] {
+  display: none !important;
+}
+
 html,
 body {
   margin: 0;
