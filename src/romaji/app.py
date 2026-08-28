@@ -6,11 +6,12 @@ from functools import lru_cache
 from pathlib import Path
 
 import uvicorn
-from fastapi import FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException, Request, Response
 from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
+from romaji.auth import ALLOWED_USERS, SessionManager, UserStore
 from romaji.config import AppConfig, ConfigError, load_config
 from romaji.llm import LlmError, convert_romaji, convert_romaji_stream, create_client, revise_logic
 from romaji.logic import LogicError, LogicStore
@@ -35,6 +36,64 @@ def get_example_store() -> ExampleStore:
     store = ExampleStore(get_config().paths.examples_dir)
     store.ensure_initialized()
     return store
+
+
+def get_user_store() -> UserStore:
+    store = UserStore(get_config().paths.auth_dir)
+    store.ensure_initialized()
+    return store
+
+
+def get_session_manager() -> SessionManager:
+    return SessionManager(get_config().paths.auth_dir)
+
+
+def extract_token(request: Request) -> str | None:
+    token = request.cookies.get("romaji_session")
+    if token:
+        return token
+    auth_header = request.headers.get("Authorization")
+    if auth_header and auth_header.startswith("Bearer "):
+        return auth_header[7:].strip()
+    return None
+
+
+def get_current_user_optional(request: Request) -> str | None:
+    token = extract_token(request)
+    if not token:
+        return None
+    session_mgr = get_session_manager()
+    return session_mgr.verify_token(token)
+
+
+def get_current_user(request: Request) -> str:
+    user = get_current_user_optional(request)
+    if not user:
+        raise HTTPException(status_code=401, detail="認証が必要です。ログインしてください。")
+    return user
+
+
+def require_admin(request: Request) -> str:
+    user = get_current_user(request)
+    if user != "admin":
+        raise HTTPException(status_code=403, detail="管理者権限が必要です。")
+    return user
+
+
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+
+class LoginResponse(BaseModel):
+    username: str
+    role: str
+
+
+class MeResponse(BaseModel):
+    authenticated: bool
+    username: str | None = None
+    role: str | None = None
 
 
 class ConvertRequest(BaseModel):
@@ -78,6 +137,35 @@ def create_app() -> FastAPI:
     @app.get("/api/health")
     def health() -> dict[str, str]:
         return {"status": "ok"}
+
+    @app.post("/api/auth/login", response_model=LoginResponse)
+    def login(body: LoginRequest, response: Response) -> LoginResponse:
+        user_store = get_user_store()
+        if not user_store.verify_password(body.username, body.password):
+            raise HTTPException(status_code=401, detail="ユーザー名またはパスワードが正しくありません")
+        session_mgr = get_session_manager()
+        token = session_mgr.create_token(body.username)
+        response.set_cookie(
+            key="romaji_session",
+            value=token,
+            httponly=True,
+            samesite="lax",
+            max_age=7 * 86400,
+            path="/",
+        )
+        return LoginResponse(username=body.username, role=body.username)
+
+    @app.post("/api/auth/logout")
+    def logout(response: Response) -> dict[str, str]:
+        response.delete_cookie(key="romaji_session", path="/")
+        return {"status": "ok"}
+
+    @app.get("/api/auth/me", response_model=MeResponse)
+    def auth_me(request: Request) -> MeResponse:
+        user = get_current_user_optional(request)
+        if user:
+            return MeResponse(authenticated=True, username=user, role=user)
+        return MeResponse(authenticated=False, username=None, role=None)
 
     @app.get("/api/ui-config", response_model=UiConfigResponse)
     def ui_config() -> UiConfigResponse:
