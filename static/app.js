@@ -20,6 +20,7 @@
   const logicVersionEl = document.getElementById("logicVersion");
   const confirmBtn = document.getElementById("confirmBtn");
   const logicBtn = document.getElementById("logicBtn");
+  const copyNextBtn = document.getElementById("copyNextBtn");
 
   let debounceMs = 800;
   let timer = null;
@@ -217,6 +218,52 @@
       convertNow();
     }, debounceMs);
   }
+
+  async function copyTextToClipboard(text) {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(text);
+      return;
+    }
+    const tmp = document.createElement("textarea");
+    tmp.value = text;
+    tmp.setAttribute("readonly", "");
+    tmp.style.position = "fixed";
+    tmp.style.opacity = "0";
+    document.body.appendChild(tmp);
+    tmp.select();
+    try {
+      if (!document.execCommand("copy")) {
+        throw new Error("クリップボードにコピーできませんでした");
+      }
+    } finally {
+      document.body.removeChild(tmp);
+    }
+  }
+
+  copyNextBtn.addEventListener("click", async () => {
+    if (!currentUser) return;
+    const text = outputEl.value;
+    if (!text.trim()) {
+      setStatus("コピーする変換結果がありません", true);
+      return;
+    }
+    copyNextBtn.disabled = true;
+    try {
+      await copyTextToClipboard(text);
+      inputEl.value = "";
+      outputEl.value = "";
+      lastAutoOutput = "";
+      if (timer) {
+        clearTimeout(timer);
+        timer = null;
+      }
+      setStatus("コピーしました");
+    } catch (err) {
+      setStatus(err.message || String(err), true);
+    } finally {
+      copyNextBtn.disabled = false;
+    }
+  });
 
   loginForm.addEventListener("submit", handleLogin);
   logoutBtn.addEventListener("click", handleLogout);
