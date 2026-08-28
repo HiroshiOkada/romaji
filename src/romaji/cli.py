@@ -1,10 +1,11 @@
-"""CLI: 変換ロジックの一覧・表示・復元。"""
+"""CLI: 変換ロジックの一覧・表示・復元、およびパスワード発行。"""
 
 from __future__ import annotations
 
 import argparse
 import sys
 
+from romaji.auth import ALLOWED_USERS, AuthError, UserStore
 from romaji.config import ConfigError, load_config
 from romaji.logic import LogicError, LogicStore
 
@@ -20,7 +21,17 @@ def build_parser() -> argparse.ArgumentParser:
     restore = sub.add_parser("logic-restore", help="指定版のロジックを現行に復元")
     restore.add_argument("version_id", help="復元する版 ID（例: v20260811T070000Z）")
 
+    issue_pw = sub.add_parser(
+        "issue-password", help="admin または guest のパスワードを新規発行・上書き"
+    )
+    issue_pw.add_argument(
+        "username",
+        choices=sorted(ALLOWED_USERS),
+        help="パスワードを発行するユーザー名 (admin または guest)",
+    )
+
     return parser
+
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -61,7 +72,17 @@ def main(argv: list[str] | None = None) -> int:
             new_id = store.restore(args.version_id)
             print(f"復元しました。新しい現行版 ID: {new_id}")
             return 0
-    except LogicError as exc:
+
+        if args.command == "issue-password":
+            auth_dir = getattr(config.paths, "auth_dir", None)
+            if auth_dir is None:
+                auth_dir = config.paths.logic_dir.parent / "auth"
+            user_store = UserStore(auth_dir)
+            password = user_store.issue_password(args.username)
+            print(f"ユーザー '{args.username}' の新しいパスワードを発行しました:")
+            print(password)
+            return 0
+    except (LogicError, AuthError) as exc:
         print(f"エラー: {exc}", file=sys.stderr)
         return 1
 
