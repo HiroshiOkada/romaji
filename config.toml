@@ -24,4 +24,4 @@ model = "openai/gpt-5.6-terra"
 
 [ui]
 # 入力停止後、このミリ秒待ってから自動変換する
-debounce_ms = 800
+debounce_ms = 500
