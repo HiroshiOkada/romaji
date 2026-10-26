@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import logging
 import os
+import threading
 import tomllib
 from dataclasses import dataclass
 from pathlib import Path
@@ -11,6 +13,9 @@ from dotenv import load_dotenv
 
 ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_CONFIG_PATH = ROOT / "config.toml"
+DEFAULT_ENV_PATH = ROOT / ".env"
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -57,6 +62,65 @@ class AppConfig:
 
 class ConfigError(ValueError):
     """設定不正。"""
+
+
+class ConfigCache:
+    """設定と .env を mtime で監視し、更新されたら自動で再読込するキャッシュ。
+
+    リクエスト時に `get()` を呼ぶだけでよく、リアルタイム性は不要な用途のための
+    手軽な更新検知。ステップは (config.toml の mtime_ns, .env の mtime_ns)。
+    なお `[server] host/port` は uvicorn 起動時に bind されるため、再読込の
+    対象にならず、反映には再起動が必要。
+    """
+
+    def __init__(self, config_path: Path | None = None) -> None:
+        self._config_path = config_path or DEFAULT_CONFIG_PATH
+        self._lock = threading.Lock()
+        self._stamp: tuple[float, float] | None = None
+        self._cached: AppConfig | None = None
+
+    def _stamp(self) -> tuple[float, float]:
+        values: list[float] = []
+        for path in (self._config_path, self._config_path.parent / ".env"):
+            try:
+                values.append(float(path.stat().st_mtime_ns))
+            except OSError:
+                # .env は省略可能。config.toml が消えた場合も再読込側で処理する
+                values.append(0.0)
+        return (values[0], values[1])
+
+    def get(self) -> AppConfig:
+        """現在有効な設定を返す。ファイル更新を検知したら再読込する。"""
+        stamp = self._stamp()
+
+        with self._lock:
+            cached = self._cached
+            if cached is not None and stamp == self._stamp:
+                return cached
+
+            try:
+                if cached is None:
+                    self._cached = load_config(self._config_path)
+                else:
+                    # 再読込時は .env を既存環境変数より優先して取り直し、
+                    # API キーの回転などにも追随する
+                    env_path = self._config_path.parent / ".env"
+                    load_dotenv(env_path, override=True)
+                    self._cached = load_config(self._config_path, load_env=False)
+                self._stamp = stamp
+            except (ConfigError, OSError) as exc:
+                if self._cached is None:
+                    raise
+                logger.warning(
+                    "設定の再読込に失敗しました。前回の設定を使い続けます: %s", exc
+                )
+            return self._cached
+
+    def reset(self) -> None:
+        """キャッシュを破棄して、次の get() で必ず再読込させる。"""
+        with self._lock:
+            self._stamp = None
+            self._cached = None
 
 
 def _require_mapping(data: object, section: str) -> dict:
