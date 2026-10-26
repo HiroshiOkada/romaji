@@ -76,7 +76,7 @@ class ConfigCache:
     def __init__(self, config_path: Path | None = None) -> None:
         self._config_path = config_path or DEFAULT_CONFIG_PATH
         self._lock = threading.Lock()
-        self._stamp: tuple[float, float] | None = None
+        self._stamp_value: tuple[float, float] | None = None
         self._cached: AppConfig | None = None
 
     def _stamp(self) -> tuple[float, float]:
@@ -95,7 +95,7 @@ class ConfigCache:
 
         with self._lock:
             cached = self._cached
-            if cached is not None and stamp == self._stamp:
+            if cached is not None and stamp == self._stamp_value:
                 return cached
 
             try:
@@ -107,7 +107,7 @@ class ConfigCache:
                     env_path = self._config_path.parent / ".env"
                     load_dotenv(env_path, override=True)
                     self._cached = load_config(self._config_path, load_env=False)
-                self._stamp = stamp
+                self._stamp_value = stamp
             except (ConfigError, OSError) as exc:
                 if self._cached is None:
                     raise
@@ -119,7 +119,7 @@ class ConfigCache:
     def reset(self) -> None:
         """キャッシュを破棄して、次の get() で必ず再読込させる。"""
         with self._lock:
-            self._stamp = None
+            self._stamp_value = None
             self._cached = None
 
 
