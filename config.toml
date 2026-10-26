@@ -16,10 +16,11 @@ base_url = "https://openrouter.ai/api/v1"
 api_key_env = "LLM_INPUT_API_KEY"
 
 # 変換実行モデルは暫定。完成後の実測で確定する。
-# minimax-m3.1-flash: gemini-3.1-flash-lite-preview($0.25/$1.50, score 57)から
-#スコア74・$0.15/$0.60へ置き換え（2026-10、OpenRouter 実勢価格・benchlm スコア）。
+# minimax-m3.1-flash（スコア74・$0.15/$0.60、2026-10）は変換精度が落ちたため差し戻し。
+# gemini-3.5-flash-lite は gemini-3.1-flash-lite-preview($0.25/$1.50, score 57)と同系の
+# 最新版でスコア62・$0.30/$2.50（2026-10、OpenRouter 実勢価格・benchlm スコア）。
 [llm.conversion]
-model = "minimax/minimax-m3.1-flash"
+model = "google/gemini-3.5-flash-lite"
 
 # ロジック改訂は gpt-5.6-terra($2.00/$12.00, score 75)から
 #スコア77・$0.75/$3.75 の gemini-3.7-flash へ置き換え（同上）。
