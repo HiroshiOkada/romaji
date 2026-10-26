@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from functools import lru_cache
 from pathlib import Path
 
 import uvicorn
@@ -12,7 +11,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from romaji.auth import ALLOWED_USERS, SessionManager, UserStore
-from romaji.config import AppConfig, ConfigError, load_config
+from romaji.config import AppConfig, ConfigCache, ConfigError, load_config
 from romaji.llm import LlmError, convert_romaji, convert_romaji_stream, create_client, revise_logic
 from romaji.logic import LogicError, LogicStore
 from romaji.store import ExampleStore, StoreError
@@ -21,9 +20,12 @@ ROOT = Path(__file__).resolve().parents[2]
 STATIC_DIR = ROOT / "static"
 
 
-@lru_cache(maxsize=1)
+# 設定ファイル (config.toml / .env) を mtime 監視で自動再読込するキャッシュ
+_config_cache = ConfigCache()
+
+
 def get_config() -> AppConfig:
-    return load_config()
+    return _config_cache.get()
 
 
 def get_logic_store() -> LogicStore:
@@ -276,12 +278,11 @@ app = create_app()
 
 def run() -> None:
     try:
+        # host/port は uvicorn の bind に必要。プロセス起動時に一度だけ読む。
         config = load_config()
     except ConfigError as exc:
         raise SystemExit(f"設定エラー: {exc}") from exc
 
-    # 設定変更を拾えるようキャッシュをクリア
-    get_config.cache_clear()
     uvicorn.run(
         "romaji.app:app",
         host=config.server.host,
