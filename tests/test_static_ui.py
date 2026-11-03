@@ -4,7 +4,12 @@ from __future__ import annotations
 
 import subprocess
 import sys
+import xml.etree.ElementTree as ET
 from pathlib import Path
+
+from fastapi.testclient import TestClient
+
+from romaji.app import create_app
 
 STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
 
@@ -44,3 +49,26 @@ def test_style_css_hidden_attribute_guard() -> None:
     css = (STATIC_DIR / "style.css").read_text(encoding="utf-8")
     assert "[hidden]" in css
     assert "display: none" in css
+
+
+def test_favicon_exists_and_referenced_in_html() -> None:
+    """ファビコン SVG が存在して整形式であり、index.html から参照されていること。"""
+    favicon_path = STATIC_DIR / "favicon.svg"
+    assert favicon_path.is_file()
+    svg_text = favicon_path.read_text(encoding="utf-8")
+    root = ET.fromstring(svg_text)
+    assert root.tag.endswith("svg")
+
+    html = (STATIC_DIR / "index.html").read_text(encoding="utf-8")
+    assert '<link rel="icon" href="/static/favicon.svg" type="image/svg+xml">' in html
+
+
+def test_favicon_served_via_http() -> None:
+    """/static/favicon.svg と /favicon.ico の両方でファビコンが取得できること。"""
+    client = TestClient(create_app())
+    for path in ("/static/favicon.svg", "/favicon.ico"):
+        res = client.get(path)
+        assert res.status_code == 200
+        assert "image/svg+xml" in res.headers["content-type"]
+        assert "<svg" in res.text
+

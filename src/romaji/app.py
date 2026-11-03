@@ -267,6 +267,13 @@ def create_app() -> FastAPI:
             raise HTTPException(status_code=404, detail="static/index.html がありません")
         return FileResponse(index_path)
 
+    @app.get("/favicon.ico", include_in_schema=False)
+    def favicon() -> FileResponse:
+        favicon_path = STATIC_DIR / "favicon.svg"
+        if not favicon_path.is_file():
+            raise HTTPException(status_code=404, detail="static/favicon.svg がありません")
+        return FileResponse(favicon_path, media_type="image/svg+xml")
+
     if STATIC_DIR.is_dir():
         app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
